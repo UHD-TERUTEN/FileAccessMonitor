@@ -22,7 +22,7 @@ static BOOL WINAPI CtrlHandler(DWORD ctrlType)
 	return FALSE;
 }
 
-int main()
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpcmdLine, int nCmdShow)
 {
 	SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
 
@@ -32,8 +32,8 @@ int main()
 	{
 		Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << monitor.GetStatus() << "] "
 							<< monitor.GetErrorMessage() << endl;
-		return 1;
+		return WM_QUIT;
 	}
 	monitor.Run();
-	return 0;
+	return WM_QUIT;
 }

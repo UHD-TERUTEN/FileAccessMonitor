@@ -77,15 +77,13 @@ static HANDLE AdvancedOpenProcess(_In_ DWORD pid)
 	return ret;
 }
 
+static HMODULE ntdll = NULL;
+static HMODULE kernel32 = NULL;
+static PROC_RtlCreateUserThread rtlCreateUserThread = NULL;
+static PTHREAD_START_ROUTINE start_address = NULL;
 
-static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer, _In_ SIZE_T buffer_size)
+bool LoadDllFunctions()
 {
-	HMODULE ntdll = NULL;
-	HMODULE kernel32 = NULL;
-	HANDLE thread_handle = NULL;
-	CLIENT_ID cid;
-	PROC_RtlCreateUserThread RtlCreateUserThread = NULL;
-	PTHREAD_START_ROUTINE start_address = NULL;
 	bool ret = false;
 
 	__try
@@ -98,8 +96,8 @@ static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer
 			__leave;
 		}
 
-		RtlCreateUserThread = (PROC_RtlCreateUserThread)GetProcAddress(ntdll, "RtlCreateUserThread");
-		if (!RtlCreateUserThread)
+		rtlCreateUserThread = (PROC_RtlCreateUserThread)GetProcAddress(ntdll, "RtlCreateUserThread");
+		if (!rtlCreateUserThread)
 		{
 			Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
 								<< "Failed to GetProcAddress(RtlCreateUserThread)" << endl;
@@ -121,8 +119,25 @@ static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer
 								<< "Failed to GetProcAddress(LoadLibraryW)" << endl;
 			__leave;
 		}
+		ret = true;
+	}
+	__finally
+	{
+		if (kernel32)	FreeLibrary(kernel32);
+		if (ntdll)		FreeLibrary(ntdll);
+	}
+	return ret;
+}
 
-		NTSTATUS status = RtlCreateUserThread(	process_handle,
+static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer, _In_ SIZE_T buffer_size)
+{
+	HANDLE thread_handle = NULL;
+	CLIENT_ID cid;
+	bool ret = false;
+
+	__try
+	{
+		NTSTATUS status = rtlCreateUserThread(	process_handle,
 												NULL,
 												false,
 												0,
@@ -134,25 +149,24 @@ static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer
 												&cid);
 		if (status > 0)
 		{
-			Logger::Instance() << "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
-				<< "Failed to RtlCreateUserThread (status: " << status << ")" << endl;
+			Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
+								<< "Failed to RtlCreateUserThread (status: " << status << ")" << endl;
 			__leave;
 		}
 
 		status = WaitForSingleObject(thread_handle, INFINITE);
 		if (status == WAIT_FAILED)
 		{
-			Logger::Instance() << "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
-				<< "Failed to WaitForSingleObject (status: " << status << ")" << endl;
+			Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
+								<< "Failed to WaitForSingleObject (status: " << status << ")" << endl;
 			__leave;
 		}
 		ret = true;
 	}
 	__finally
 	{
-		if (kernel32)		FreeLibrary(kernel32);
-		if (ntdll)			FreeLibrary(ntdll);
-		if (thread_handle)	CloseHandle(thread_handle);
+		if (thread_handle)
+			CloseHandle(thread_handle);
 	}
 	return ret;
 }
@@ -200,4 +214,33 @@ bool InjectDll(DWORD PID, const wchar_t* dllName)
 		}
 	}
 	return ret;
+}
+
+std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size)
+{
+	if ((nullptr == unicode) || (0 == unicode_size))
+		return{};
+
+	std::string utf8{};
+
+	// getting required cch
+	if (int required_cch = ::WideCharToMultiByte(CP_UTF8,
+		WC_ERR_INVALID_CHARS,
+		unicode, static_cast<int>(unicode_size),
+		nullptr, 0,
+		nullptr, nullptr))
+	{
+		// allocate
+		utf8.resize(required_cch);
+	}
+	else
+		return {};
+
+	// convert
+	::WideCharToMultiByte(CP_UTF8,
+		WC_ERR_INVALID_CHARS,
+		unicode, static_cast<int>(unicode_size),
+		const_cast<char*>(utf8.c_str()), static_cast<int>(utf8.size()),
+		nullptr, nullptr);
+	return utf8;
 }

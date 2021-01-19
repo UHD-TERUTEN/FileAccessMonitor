@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <tchar.h>
 
+#include <string>
+
 typedef struct _CLIENT_ID
 {
 	PVOID UniqueProcess;
@@ -24,4 +26,8 @@ typedef NTSTATUS(WINAPI* PROC_RtlCreateUserThread)
 	PCLIENT_ID ClientId
 );
 
+bool LoadDllFunctions();
+
 bool InjectDll(DWORD PID, const wchar_t* dllName);
+
+std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size);

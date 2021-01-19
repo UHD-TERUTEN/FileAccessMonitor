@@ -1,4 +1,5 @@
-﻿#include "ProcessMonitor.h"
+﻿#include "util.h"
+#include "ProcessMonitor.h"
 using namespace WMIProcess;
 
 #include "Logger.h"
@@ -24,8 +25,20 @@ static BOOL WINAPI CtrlHandler(DWORD ctrlType)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpcmdLine, int nCmdShow)
 {
-	SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
+	// Initialize application
+	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE))
+	{
+		Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
+							<< "SetConsoleCtrlHandler failed." << endl;
+		return WM_QUIT;
+	}
+	if (!LoadDllFunctions())
+	{
+		Logger::Instance() << "LoadDllFunctions failed." << endl;
+		return WM_QUIT;
+	}
 
+	// Run the ProcessMonitor
 	ProcessMonitor monitor{};
 
 	if (FAILED(monitor.GetStatus()))

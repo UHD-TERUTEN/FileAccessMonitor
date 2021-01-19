@@ -65,7 +65,7 @@ namespace WMIProcess
 					hr = objArray[i]->Get(L"Name", 0, &cn, NULL, NULL);
 					if (SUCCEEDED(hr))
 					{
-						Logger::Instance() << "Name : " << ToUtf8String(cn.bstrVal, SysStringLen(cn.bstrVal) << endl;
+						Logger::Instance() << "Name : " << ToUtf8String(cn.bstrVal, SysStringLen(cn.bstrVal)) << endl;
 					}
 					VariantClear(&cn);
 #endif
@@ -73,7 +73,7 @@ namespace WMIProcess
 					if (SUCCEEDED(hr))
 					{
 #ifdef _DEBUG
-						Logger::Instance()	<< "ProcessId : " << cn.uintVal << endl;
+						Logger::Instance()	<< "ProcessId : " << dec << cn.uintVal << endl;
 						auto ret = InjectDll(cn.uintVal, L"DetoursLog.dll");
 						Logger::Instance()	<< "Injection Succeeded: " << boolalpha << ret << endl;
 #else

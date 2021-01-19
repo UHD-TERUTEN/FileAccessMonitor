@@ -32,11 +32,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpcmdLine
 							<< "SetConsoleCtrlHandler failed." << endl;
 		return WM_QUIT;
 	}
+	Logger::Instance() << "SetConsoleCtrlHandler succeeded." << endl;
+
 	if (!LoadDllFunctions())
 	{
 		Logger::Instance() << "LoadDllFunctions failed." << endl;
 		return WM_QUIT;
 	}
+	Logger::Instance() << "LoadDllFunctions succeeded." << endl;
 
 	// Run the ProcessMonitor
 	ProcessMonitor monitor{};

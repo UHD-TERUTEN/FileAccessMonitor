@@ -29,17 +29,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpcmdLine
 	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE))
 	{
 		Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
-							<< "SetConsoleCtrlHandler failed." << endl;
+							<< "Failed to SetConsoleCtrlHandler" << endl;
 		return WM_QUIT;
 	}
-	Logger::Instance() << "SetConsoleCtrlHandler succeeded." << endl;
+	Logger::Instance() << "SetConsoleCtrlHandler OK" << endl;
 
 	if (!LoadDllFunctions())
 	{
-		Logger::Instance() << "LoadDllFunctions failed." << endl;
+		Logger::Instance() << "Failed to LoadDllFunctions" << endl;
 		return WM_QUIT;
 	}
-	Logger::Instance() << "LoadDllFunctions succeeded." << endl;
+	Logger::Instance() << "LoadDllFunctions OK" << endl;
 
 	// Run the ProcessMonitor
 	ProcessMonitor monitor{};

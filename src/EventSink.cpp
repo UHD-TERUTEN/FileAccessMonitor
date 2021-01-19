@@ -68,6 +68,13 @@ namespace WMIProcess
 						Logger::Instance() << "Name : " << ToUtf8String(cn.bstrVal, SysStringLen(cn.bstrVal)) << endl;
 					}
 					VariantClear(&cn);
+
+					hr = objArray[i]->Get(L"ParentProcessId", 0, &cn, NULL, NULL);
+					if (SUCCEEDED(hr))
+					{
+						Logger::Instance() << "ParentProcessId : " << dec << cn.uintVal << endl;
+					}
+					VariantClear(&cn);
 #endif
 					hr = objArray[i]->Get(L"ProcessId", 0, &cn, NULL, NULL);
 					if (SUCCEEDED(hr))

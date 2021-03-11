@@ -7,7 +7,7 @@ namespace wql
 {
 	static constexpr auto notifyConsoleCreation =
 		"SELECT * "
-		"FROM __InstanceCreationEvent WITHIN 1 "
+		"FROM __InstanceCreationEvent WITHIN 3 "
 		"WHERE TargetInstance ISA 'Win32_Process'"
 		"AND TargetInstance.Name LIKE '%.exe'";
 }

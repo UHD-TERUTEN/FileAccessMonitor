@@ -81,10 +81,10 @@ namespace WMIProcess
 					{
 #ifdef _DEBUG
 						Logger::Instance()	<< "ProcessId : " << dec << cn.uintVal << endl;
-						auto ret = InjectDll(cn.uintVal, L"DetoursLog.dll");
+						auto ret = InjectDll(cn.uintVal, LR"(C:\Windows\System32\DetoursLog.dll)");
 						Logger::Instance()	<< "Injection Succeeded: " << boolalpha << ret << endl;
 #else
-						InjectDll(cn.uintVal, L"DetoursLog.dll");
+						InjectDll(cn.uintVal, LR"(C:\Windows\System32\DetoursLog.dll)");
 #endif
 					}
 					VariantClear(&cn);

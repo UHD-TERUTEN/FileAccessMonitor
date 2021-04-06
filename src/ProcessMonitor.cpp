@@ -35,7 +35,7 @@ namespace WMIProcess
 {
 	struct ProcessMonitor::Impl
 	{
-		HRESULT					hres;
+		HRESULT					hres{};
 		std::string				errorMessage;
 		IWbemLocator*			ploc		= nullptr;
 		IWbemServices*			psvc		= nullptr;

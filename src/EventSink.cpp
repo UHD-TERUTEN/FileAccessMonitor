@@ -68,23 +68,16 @@ namespace WMIProcess
 						Logger::Instance() << "Name : " << ToUtf8String(cn.bstrVal, SysStringLen(cn.bstrVal)) << endl;
 					}
 					VariantClear(&cn);
-
-					hr = objArray[i]->Get(L"ParentProcessId", 0, &cn, NULL, NULL);
-					if (SUCCEEDED(hr))
-					{
-						Logger::Instance() << "ParentProcessId : " << dec << cn.uintVal << endl;
-					}
-					VariantClear(&cn);
 #endif
 					hr = objArray[i]->Get(L"ProcessId", 0, &cn, NULL, NULL);
 					if (SUCCEEDED(hr))
 					{
 #ifdef _DEBUG
 						Logger::Instance()	<< "ProcessId : " << dec << cn.uintVal << endl;
-						auto ret = InjectDll(cn.uintVal, LR"(C:\Windows\System32\DetoursLog.dll)");
+						auto ret = InjectDll(cn.uintVal, L"DetoursLog.dll");
 						Logger::Instance()	<< "Injection Succeeded: " << boolalpha << ret << endl;
 #else
-						InjectDll(cn.uintVal, LR"(C:\Windows\System32\DetoursLog.dll)");
+						InjectDll(cn.uintVal, L"DetoursLog.dll");
 #endif
 					}
 					VariantClear(&cn);

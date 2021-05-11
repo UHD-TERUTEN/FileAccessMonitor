@@ -7,6 +7,13 @@ using namespace std;
 
 #include <TlHelp32.h>
 
+static bool IsWow64(HANDLE hProcess)
+{
+	BOOL isWow64 = false;
+
+	return IsWow64Process(hProcess, &isWow64) && isWow64;
+}
+
 static bool SetPrivilege(_In_z_ const wchar_t* privilege, _In_ bool enable)
 {
 	if (!privilege)
@@ -123,6 +130,7 @@ bool LoadDllFunctions()
 	}
 	__finally
 	{
+		// is necessary?
 		if (kernel32)	FreeLibrary(kernel32);
 		if (ntdll)		FreeLibrary(ntdll);
 	}
@@ -171,12 +179,16 @@ static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer
 	return ret;
 }
 
-bool InjectDll(DWORD PID, const wchar_t* dllName)
+const wchar_t* InjectDll(DWORD PID)
 {
+	static const wchar_t* DetoursLog32 = L"DetoursLog32.dll";
+	static const wchar_t* DetoursLog64 = L"DetoursLog64.dll";
+
+	const wchar_t* dllName = NULL;
 	HANDLE hProcess{};
 	wchar_t* buffer = NULL;
-	const size_t bufferSize = wcslen(dllName) * sizeof(wchar_t) + 1;
-	bool ret = false;
+	const size_t bufferSize = wcslen(DetoursLog32) * sizeof(wchar_t) + 1;
+	bool isSuccess = false;
 
 	__try
 	{
@@ -196,6 +208,7 @@ bool InjectDll(DWORD PID, const wchar_t* dllName)
 			__leave;
 		}
 
+		dllName = IsWow64(hProcess) ? DetoursLog64 : DetoursLog32;
 		if (!WriteProcessMemory(hProcess, buffer, dllName, bufferSize, NULL))
 		{
 			Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
@@ -203,7 +216,7 @@ bool InjectDll(DWORD PID, const wchar_t* dllName)
 			__leave;
 		}
 
-		ret = RtlCreateUserThread(hProcess, buffer, bufferSize);
+		isSuccess = RtlCreateUserThread(hProcess, buffer, bufferSize);
 	}
 	__finally
 	{
@@ -213,7 +226,7 @@ bool InjectDll(DWORD PID, const wchar_t* dllName)
 			CloseHandle(hProcess);
 		}
 	}
-	return ret;
+	return isSuccess ? dllName : nullptr;
 }
 
 std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size)

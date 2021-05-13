@@ -74,8 +74,8 @@ namespace WMIProcess
 					{
 #ifdef _DEBUG
 						Logger::Instance()	<< "ProcessId : " << dec << cn.uintVal << endl;
-						auto dllName = InjectDll(cn.uintVal);
-						Logger::Instance()	<< "Injection Succeeded : " << ToUtf8String(dllName, wcslen(dllName)) << endl;
+						if (auto ret = InjectDll(cn.uintVal))
+							Logger::Instance() << "Injection Succeeded : " << boolalpha << ret << endl;
 #else
 						InjectDll(cn.uintVal, L"DetoursLog.dll");
 #endif

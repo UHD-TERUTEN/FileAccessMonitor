@@ -28,6 +28,6 @@ typedef NTSTATUS(WINAPI* PROC_RtlCreateUserThread)
 
 bool LoadDllFunctions();
 
-const wchar_t* InjectDll(DWORD PID);
+bool InjectDll(DWORD PID);
 
 std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size);

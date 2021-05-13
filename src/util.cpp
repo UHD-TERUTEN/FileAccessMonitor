@@ -7,11 +7,12 @@ using namespace std;
 
 #include <TlHelp32.h>
 
-static bool IsWow64(HANDLE hProcess)
+static bool Is32bitProcess(HANDLE hProcess)
 {
-	BOOL isWow64 = false;
+	BOOL isWow64 = FALSE;	// is Windows 32-bit on Windows 64-bit
 
-	return IsWow64Process(hProcess, &isWow64) && isWow64;
+	IsWow64Process(hProcess, &isWow64);
+	return isWow64;
 }
 
 static bool SetPrivilege(_In_z_ const wchar_t* privilege, _In_ bool enable)
@@ -179,15 +180,20 @@ static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer
 	return ret;
 }
 
-const wchar_t* InjectDll(DWORD PID)
-{
-	static const wchar_t* DetoursLog32 = L"DetoursLog32.dll";
-	static const wchar_t* DetoursLog64 = L"DetoursLog64.dll";
+#ifdef _WIN64
+constexpr auto DLL_NAME = L"DetoursLog64.dll";
+#define	ShouldInject(hProcess)	(!Is32bitProcess(hProcess))
+#else
+constexpr auto DLL_NAME = L"DetoursLog32.dll";
+#define	ShouldInject(hProcess)	(Is32bitProcess(hProcess))
+#endif
 
-	const wchar_t* dllName = NULL;
+
+bool InjectDll(DWORD PID)
+{
 	HANDLE hProcess{};
 	wchar_t* buffer = NULL;
-	const size_t bufferSize = wcslen(DetoursLog32) * sizeof(wchar_t) + 1;
+	const size_t bufferSize = wcslen(DLL_NAME) * sizeof(wchar_t) + 1;
 	bool isSuccess = false;
 
 	__try
@@ -200,6 +206,9 @@ const wchar_t* InjectDll(DWORD PID)
 			__leave;
 		}
 
+		if (!ShouldInject(hProcess))
+			__leave;
+
 		buffer = (wchar_t*)VirtualAllocEx(hProcess, NULL, bufferSize, MEM_COMMIT, PAGE_READWRITE);
 		if (!buffer)
 		{
@@ -208,8 +217,7 @@ const wchar_t* InjectDll(DWORD PID)
 			__leave;
 		}
 
-		dllName = IsWow64(hProcess) ? DetoursLog64 : DetoursLog32;
-		if (!WriteProcessMemory(hProcess, buffer, dllName, bufferSize, NULL))
+		if (!WriteProcessMemory(hProcess, buffer, DLL_NAME, bufferSize, NULL))
 		{
 			Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
 								<< "Failed to WriteProcessMemory" << endl;
@@ -226,7 +234,7 @@ const wchar_t* InjectDll(DWORD PID)
 			CloseHandle(hProcess);
 		}
 	}
-	return isSuccess ? dllName : nullptr;
+	return isSuccess;
 }
 
 std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size)

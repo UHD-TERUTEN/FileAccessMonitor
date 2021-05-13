@@ -23,7 +23,11 @@ static BOOL WINAPI CtrlHandler(DWORD ctrlType)
 	return FALSE;
 }
 
+#ifdef _DEBUG
+int main()
+#else
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpcmdLine, int nCmdShow)
+#endif
 {
 	// Initialize application
 	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE))

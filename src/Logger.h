@@ -1,9 +1,17 @@
 #pragma once
-#include <fstream>
 #include <string_view>
 #include <chrono>
 #include <cstring>
 #include <ctime>
+
+#ifdef _DEBUG
+#include <iostream>
+#define out			std::cout
+#define outstream	std::ostream
+#else
+#include <fstream>
+#define outstream	std::ofstream
+#endif
 
 namespace Log
 {
@@ -16,15 +24,17 @@ namespace Log
 			return *logger;
 		}
 
-		std::ofstream& operator<<(std::string_view message)
+		outstream& operator<<(std::string_view message)
 		{
-			file << GetTimestamp() << '\t' << message;
-			return file;
+			out << GetTimestamp() << '\t' << message;
+			return out;
 		}
 
 	private:
 		Logger()
-			: file("log", std::ios::app)
+#ifndef _DEBUG
+			: out("log", std::ios::app)
+#endif
 		{
 		}
 
@@ -40,6 +50,8 @@ namespace Log
 			return timeBuf;
 		}
 
-		std::ofstream file;
+#ifndef _DEBUG
+		std::ofstream out;
+#endif
 	};
 }

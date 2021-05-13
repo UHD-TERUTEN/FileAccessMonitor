@@ -7,6 +7,14 @@ using namespace std;
 
 #include <TlHelp32.h>
 
+static bool Is32bitProcess(HANDLE hProcess)
+{
+	BOOL isWow64 = FALSE;	// is Windows 32-bit on Windows 64-bit
+
+	IsWow64Process(hProcess, &isWow64);
+	return isWow64;
+}
+
 static bool SetPrivilege(_In_z_ const wchar_t* privilege, _In_ bool enable)
 {
 	if (!privilege)
@@ -123,6 +131,7 @@ bool LoadDllFunctions()
 	}
 	__finally
 	{
+		// is necessary?
 		if (kernel32)	FreeLibrary(kernel32);
 		if (ntdll)		FreeLibrary(ntdll);
 	}
@@ -171,12 +180,19 @@ static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer
 	return ret;
 }
 
-bool InjectDll(DWORD PID, const wchar_t* dllName)
+#ifdef _WIN64
+#define	ShouldInject(hProcess)	(!Is32bitProcess(hProcess))
+#else
+#define	ShouldInject(hProcess)	(Is32bitProcess(hProcess))
+#endif
+
+
+bool InjectDll(DWORD PID,const wchar_t* dllName)
 {
 	HANDLE hProcess{};
 	wchar_t* buffer = NULL;
 	const size_t bufferSize = wcslen(dllName) * sizeof(wchar_t) + 1;
-	bool ret = false;
+	bool isSuccess = false;
 
 	__try
 	{
@@ -187,6 +203,9 @@ bool InjectDll(DWORD PID, const wchar_t* dllName)
 								<< "Failed to AdvancedOpenProcess" << endl;
 			__leave;
 		}
+
+		if (!ShouldInject(hProcess))
+			__leave;
 
 		buffer = (wchar_t*)VirtualAllocEx(hProcess, NULL, bufferSize, MEM_COMMIT, PAGE_READWRITE);
 		if (!buffer)
@@ -203,7 +222,7 @@ bool InjectDll(DWORD PID, const wchar_t* dllName)
 			__leave;
 		}
 
-		ret = RtlCreateUserThread(hProcess, buffer, bufferSize);
+		isSuccess = RtlCreateUserThread(hProcess, buffer, bufferSize);
 	}
 	__finally
 	{
@@ -213,7 +232,7 @@ bool InjectDll(DWORD PID, const wchar_t* dllName)
 			CloseHandle(hProcess);
 		}
 	}
-	return ret;
+	return isSuccess;
 }
 
 std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size)

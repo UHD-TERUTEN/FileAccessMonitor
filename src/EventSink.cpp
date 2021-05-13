@@ -6,6 +6,12 @@ using namespace Log;
 #include <iomanip>
 using namespace std;
 
+#ifdef _WIN64
+constexpr auto DLL_NAME = L"DetoursLog64.dll";
+#else
+constexpr auto DLL_NAME = L"DetoursLog32.dll";
+#endif
+
 namespace WMIProcess
 {
 	EventSink::EventSink()
@@ -74,10 +80,10 @@ namespace WMIProcess
 					{
 #ifdef _DEBUG
 						Logger::Instance()	<< "ProcessId : " << dec << cn.uintVal << endl;
-						if (auto ret = InjectDll(cn.uintVal))
+						if (auto ret = InjectDll(cn.uintVal, DLL_NAME))
 							Logger::Instance() << "Injection Succeeded : " << boolalpha << ret << endl;
 #else
-						InjectDll(cn.uintVal, L"DetoursLog.dll");
+						InjectDll(cn.uintVal, DLL_NAME);
 #endif
 					}
 					VariantClear(&cn);

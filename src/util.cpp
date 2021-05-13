@@ -181,19 +181,17 @@ static bool RtlCreateUserThread(_In_ HANDLE process_handle, _In_ wchar_t *buffer
 }
 
 #ifdef _WIN64
-constexpr auto DLL_NAME = L"DetoursLog64.dll";
 #define	ShouldInject(hProcess)	(!Is32bitProcess(hProcess))
 #else
-constexpr auto DLL_NAME = L"DetoursLog32.dll";
 #define	ShouldInject(hProcess)	(Is32bitProcess(hProcess))
 #endif
 
 
-bool InjectDll(DWORD PID)
+bool InjectDll(DWORD PID,const wchar_t* dllName)
 {
 	HANDLE hProcess{};
 	wchar_t* buffer = NULL;
-	const size_t bufferSize = wcslen(DLL_NAME) * sizeof(wchar_t) + 1;
+	const size_t bufferSize = wcslen(dllName) * sizeof(wchar_t) + 1;
 	bool isSuccess = false;
 
 	__try
@@ -217,7 +215,7 @@ bool InjectDll(DWORD PID)
 			__leave;
 		}
 
-		if (!WriteProcessMemory(hProcess, buffer, DLL_NAME, bufferSize, NULL))
+		if (!WriteProcessMemory(hProcess, buffer, dllName, bufferSize, NULL))
 		{
 			Logger::Instance()	<< "[0x" << setw(8) << setfill('0') << hex << GetLastError() << "] "
 								<< "Failed to WriteProcessMemory" << endl;

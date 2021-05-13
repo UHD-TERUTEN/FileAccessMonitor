@@ -15,5 +15,5 @@ TEST(UtilTest, ConvertToUtt8String)
 {
   constexpr wchar_t* hello = L"\uC548\uB155";
   
-  EXPECT_STREQ(ToUtf8String(hello, std::wcslen(hello)).c_str(), "\uC548\uB155");
+  EXPECT_STREQ(ToUtf8String(hello, std::wcslen(hello)).c_str(), u8"¾È³ç");
 }

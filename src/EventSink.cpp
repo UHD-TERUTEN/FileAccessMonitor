@@ -7,9 +7,9 @@ using namespace Log;
 using namespace std;
 
 #ifdef _WIN64
-constexpr auto DLL_NAME = L"DetoursLog64.dll";
+constexpr auto DLL_NAME = L"DetoursReject64.dll";
 #else
-constexpr auto DLL_NAME = L"DetoursLog32.dll";
+constexpr auto DLL_NAME = L"DetoursReject32.dll";
 #endif
 
 namespace WMIProcess
